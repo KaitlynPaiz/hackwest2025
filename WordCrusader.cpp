@@ -9,13 +9,13 @@
 #include <cstdlib>   // system()
 #include <algorithm> // shuffle
 
-// ---------------- Config ----------------
+//Configure
 constexpr bool END_AFTER_LAST_MONSTER = true; // set false to loop Bat->...->Imp->Bat->...
 
-// ---------------- State -----------------
+//State
 enum GameState { TITLE_SCREEN, PLAYING, GAME_OVER };
 
-// ---- Small utilities ----
+//Small utilities
 inline char tolower_safe(char c) {
     return static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
 }
@@ -60,7 +60,7 @@ bool isWordGuessed(const std::string& word, const std::set<char>& guessedLetters
     return true;
 }
 
-// --- Main Game Logic ---
+// Main Game Logic
 int main() {
     GameState currentState = TITLE_SCREEN;
 
@@ -95,12 +95,12 @@ int main() {
     while (true) {
         clearConsole();
 
-        // ---------------- TITLE SCREEN ----------------
+        //TITLE SCREEN
         if (currentState == TITLE_SCREEN) {
-            std::cout << "*****************************************\n";
+            std::cout << "********************************************\n";
             std::cout << "           WELCOME TO WORDCRUSADER       \n";
             std::cout << "             A MEDIEVAL WORD GAME        \n";
-            std::cout << "*****************************************\n\n";
+            std::cout << "********************************************\n\n";
             std::cout << "Decipher words to defeat monsters!\n";
             std::cout << "You have " << TIME_LIMIT_SECONDS << " seconds and 7 hearts per monster.\n";
             std::cout << "Each wrong letter costs a heart.\n\n";
@@ -134,7 +134,7 @@ int main() {
             }
         }
 
-        // ---------------- PLAYING ----------------
+        //  PLAYING
         else if (currentState == PLAYING) {
             auto now = std::chrono::high_resolution_clock::now();
             auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - startTime).count();
@@ -154,10 +154,10 @@ int main() {
             }
 
             // Display game HUD
-            std::cout << "-----------------------------------\n";
+            std::cout << "--------------------------------------\n";
             std::cout << "Monster: " << monsters[currentMonsterIndex] << "\n";
             std::cout << "Hearts:  ";
-            for (int i = 0; i < hearts; ++i) std::cout << "<3";
+            for (int i = 0; i < hearts; ++i) std::cout << "<3 ";
             std::cout << " |" << hearts << "/7|\n";
             std::cout << "Time Left: " << timeLeft << "s\n";
             std::cout << "Score:     " << score << "\n";
@@ -229,7 +229,7 @@ int main() {
             }
         }
 
-        // ---------------- GAME OVER ----------------
+        //GAME OVER
         else if (currentState == GAME_OVER) {
             clearConsole();
             std::cout << "\n***********************************\n";
