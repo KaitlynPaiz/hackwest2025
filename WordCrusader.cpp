@@ -1,12 +1,13 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <chrono>    // time
+#include <chrono>    // timing
 #include <set>       // guessed letters
 #include <random>    // RNG
 #include <cctype>    // tolower / isalpha
 #include <limits>    // numeric_limits
 #include <cstdlib>   // system()
+#include <algorithm> // shuffle
 
 // ---------------- Config ----------------
 constexpr bool END_AFTER_LAST_MONSTER = true; // set false to loop Bat->...->Imp->Bat->...
@@ -32,28 +33,29 @@ void clearConsole() {
 
 void waitForEnter(const char* prompt = "Press Enter to continue...") {
     std::cout << prompt;
-    // Flush any leftover chars (including multiple) up to newline
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    // Now actually wait for a real Enter press
     std::cin.get();
 }
 
-// Function to display the masked word
+// Display masked word with underscores for unguessed letters
 std::string getMaskedWord(const std::string& word, const std::set<char>& guessedLetters) {
     std::string masked;
     masked.reserve(word.size() * 2);
     for (char c : word) {
-        if (guessedLetters.count(tolower_safe(c))) masked += c;
-        else                                      masked += '_';
+        if (guessedLetters.count(tolower_safe(c)))
+            masked += c;
+        else
+            masked += '_';
         masked += ' ';
     }
     return masked;
 }
 
-// Function to check if the word is completely guessed
+// Check if the entire word is guessed
 bool isWordGuessed(const std::string& word, const std::set<char>& guessedLetters) {
     for (char c : word) {
-        if (!guessedLetters.count(tolower_safe(c))) return false;
+        if (!guessedLetters.count(tolower_safe(c)))
+            return false;
     }
     return true;
 }
@@ -62,33 +64,38 @@ bool isWordGuessed(const std::string& word, const std::set<char>& guessedLetters
 int main() {
     GameState currentState = TITLE_SCREEN;
 
-    // Content
-    const std::vector<std::string> words    = {"dragon", "knight", "castle", "sword", "shield", "bat"};
-    const std::vector<std::string> monsters = {"Bat", "Goblin", "Ghoul", "Imp"};
+    // RNG setup
+    std::random_device rd;
+    std::mt19937 generator(rd());
 
-    // State
+    // Word and monster lists
+    std::vector<std::string> words = {
+        "dragon", "knight", "castle", "sword", "shield",
+        "bat", "goblin", "wizard", "troll", "orc", "elf", "dwarf",
+        "phoenix", "griffin", "hydra", "cyclops", "minotaur",
+        "vampire", "skeleton", "giant", "witch", "warlock",
+        "necromancer", "cauldron", "armor", "chainmail",
+        "enchanted", "fortress", "quest", "legend", "myth",
+        "sorcery", "alchemy", "runestone"
+    };
+
+    const std::vector<std::string> monsters = {"Bat", "Goblin", "Ghoul", "Demon"};
+
+    // Game state variables
     int currentMonsterIndex = 0;
     std::string currentWord;
     std::set<char> guessedLetters;
     int hearts = 7;
     const int TIME_LIMIT_SECONDS = 60;
     int score = 0;
+    int wordIndex = 0;
 
-    // Timing
     std::chrono::time_point<std::chrono::high_resolution_clock> startTime;
-
-    // RNG
-    std::random_device rd;
-    std::mt19937 generator(rd());
-
-    auto pickRandomWord = [&]() {
-        std::uniform_int_distribution<int> dist(0, static_cast<int>(words.size() - 1));
-        return words[dist(generator)];
-    };
 
     while (true) {
         clearConsole();
 
+        // ---------------- TITLE SCREEN ----------------
         if (currentState == TITLE_SCREEN) {
             std::cout << "*****************************************\n";
             std::cout << "           WELCOME TO WORDCRUSADER       \n";
@@ -107,22 +114,28 @@ int main() {
                 // Initialize a fresh game
                 currentState = PLAYING;
                 hearts = 7;
-                guessedLetters.clear();
-                currentWord = pickRandomWord();
-                startTime = std::chrono::high_resolution_clock::now();
                 score = 0;
-                currentMonsterIndex = 0; // reset progression on new game
+                currentMonsterIndex = 0;
+                guessedLetters.clear();
 
-                // Eat trailing newline once after reading choice so next reads behave
+                // Reset word order
+                wordIndex = 0;
+                std::shuffle(words.begin(), words.end(), generator);
+                currentWord = words[wordIndex++];
+
+                startTime = std::chrono::high_resolution_clock::now();
+
+                // Clear input buffer
                 std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             } else if (choice == 'q') {
                 break;
             } else {
-                // Invalid key; flush line and show title again
                 std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             }
+        }
 
-        } else if (currentState == PLAYING) {
+        // ---------------- PLAYING ----------------
+        else if (currentState == PLAYING) {
             auto now = std::chrono::high_resolution_clock::now();
             auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - startTime).count();
             int timeLeft = TIME_LIMIT_SECONDS - static_cast<int>(elapsed);
@@ -140,12 +153,15 @@ int main() {
                 continue;
             }
 
+            // Display game HUD
             std::cout << "-----------------------------------\n";
             std::cout << "Monster: " << monsters[currentMonsterIndex] << "\n";
-            std::cout << "Hearts:  " << std::string(hearts, '<') << "  " << hearts << "/7\n";
+            std::cout << "Hearts:  ";
+            for (int i = 0; i < hearts; ++i) std::cout << "<3";
+            std::cout << " |" << hearts << "/7|\n";
             std::cout << "Time Left: " << timeLeft << "s\n";
-            std::cout << "Score:   " << score << "\n";
-            std::cout << "Word:    " << getMaskedWord(currentWord, guessedLetters) << "\n";
+            std::cout << "Score:     " << score << "\n";
+            std::cout << "Word:      " << getMaskedWord(currentWord, guessedLetters) << "\n";
             std::cout << "Guessed Letters: ";
             for (char l : guessedLetters) std::cout << l << ' ';
             std::cout << "\n\nEnter your guess (a single letter): ";
@@ -174,37 +190,47 @@ int main() {
                         std::cout << "\n-------------------------------\n";
                         std::cout << "You completed the word: " << currentWord << "!\n";
                         std::cout << "-------------------------------\n";
+                        std::cout << "\nCONGRATULATIONS! You defeated the "
+                                  << monsters[currentMonsterIndex] << "!\n";
 
-                        std::cout << "\nCONGRATULATIONS! You defeated the " << monsters[currentMonsterIndex] << "!\n";
-
-                        // Advance monster (either stop after last, or wrap around)
+                        // Advance to next monster
                         if (END_AFTER_LAST_MONSTER) {
                             currentMonsterIndex++;
                             if (currentMonsterIndex >= static_cast<int>(monsters.size())) {
-                                std::cout << "\nYou have defeated all the monsters! You are the ultimate WordCrusader!\n";
+                                std::cout << "\nYou have defeated all the monsters! "
+                                          << "You are the ultimate WordCrusader!\n";
                                 currentState = GAME_OVER;
                                 waitForEnter();
                                 continue;
                             }
                         } else {
-                            currentMonsterIndex = (currentMonsterIndex + 1) % static_cast<int>(monsters.size());
+                            currentMonsterIndex =
+                                (currentMonsterIndex + 1) % static_cast<int>(monsters.size());
                         }
 
-                        // Prepare next challenge
+                        // Prepare for next round
                         hearts = 7;
                         guessedLetters.clear();
-                        currentWord = pickRandomWord();
-                        startTime = std::chrono::high_resolution_clock::now();
 
+                        if (wordIndex < static_cast<int>(words.size())) {
+                            currentWord = words[wordIndex++];
+                        } else {
+                            std::cout << "No more words available! Exiting game.\n";
+                            currentState = GAME_OVER;
+                            waitForEnter();
+                            continue;
+                        }
+
+                        startTime = std::chrono::high_resolution_clock::now();
                         std::cout << "Next Monster: " << monsters[currentMonsterIndex] << "\n";
                         waitForEnter();
                     }
                 }
             }
+        }
 
-            //waitForEnter();
-
-        } else if (currentState == GAME_OVER) {
+        // ---------------- GAME OVER ----------------
+        else if (currentState == GAME_OVER) {
             clearConsole();
             std::cout << "\n***********************************\n";
             std::cout << "            GAME OVER              \n";
@@ -217,7 +243,7 @@ int main() {
             choice = tolower_safe(choice);
 
             if (choice == 'r') {
-                currentState = TITLE_SCREEN; // New game will re-init
+                currentState = TITLE_SCREEN;
                 std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             } else if (choice == 'q') {
                 break;
