@@ -10,7 +10,7 @@
 #include <algorithm> // shuffle
 
 //Configure
-constexpr bool END_AFTER_LAST_MONSTER = true; // set false to loop Bat->...->Imp->Bat->...
+constexpr bool END_AFTER_LAST_MONSTER = true; // set false
 
 //State
 enum GameState { TITLE_SCREEN, PLAYING, GAME_OVER };
