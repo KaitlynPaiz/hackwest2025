@@ -187,9 +187,9 @@ int main() {
                     std::cout << "Correct guess!\n";
                     if (isWordGuessed(currentWord, guessedLetters)) {
                         score += 100 + (hearts * 10) + (timeLeft * 5);
-                        std::cout << "\n-------------------------------\n";
+                        std::cout << "\n----------------------------------\n";
                         std::cout << "You completed the word: " << currentWord << "!\n";
-                        std::cout << "-------------------------------\n";
+                        std::cout << "----------------------------------\n";
                         std::cout << "\nCONGRATULATIONS! You defeated the "
                                   << monsters[currentMonsterIndex] << "!\n";
 
