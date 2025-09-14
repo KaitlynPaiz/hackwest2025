@@ -1,4 +1,4 @@
-# hackwest2025
+# Hackwest2025
 WordCrusader
 
 This project is a medieval-themed word game where players must guess letters to reveal hidden words before time runs out. Each wrong guess costs a heart, and players only have one minute per level to solve the word. The game spans four levels, each guarded by a unique boss that challenges the player’s skill and speed.
